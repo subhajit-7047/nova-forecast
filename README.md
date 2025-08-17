@@ -8,6 +8,7 @@
 <img width="1919" height="910" alt="Dashboard-image" src="[https://github.com/user-attachments/assets/ab3500c1-832e-4844-a88b-a7bcb5a7c0e3](https://github.com/subhajit-7047/nova-forecast/blob/main/Screenshot%202025-08-17%20222031.png)" />
 
 ![image alt](https://github.com/subhajit-7047/nova-forecast/blob/74f080149733459227abc1d7e726a4fc2d5cdff5/Screenshot%202025-08-17%20222012.png)
+![image alt]([https://github.com/subhajit-7047/nova-forecast/blob/74f080149733459227abc1d7e726a4fc2d5cdff5/Screenshot%202025-08-17%20222012.png](https://github.com/subhajit-7047/nova-forecast/blob/f2367f27766b0ea29c795b954ec78ef30c8a9164/Screenshot%202025-08-17%20222031.png))
 
 
 
