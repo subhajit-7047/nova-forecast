@@ -4,8 +4,13 @@ import { WeatherCard } from "@/components/WeatherCard";
 import { ForecastCard } from "@/components/ForecastCard";
 import { StatsCard } from "@/components/StatsCard";
 import { WeatherMap } from "@/components/WeatherMap";
+import { LocationPermission } from "@/components/LocationPermission";
+import { MLInsights } from "@/components/MLInsights";
 import { Thermometer, Droplets, Wind, Eye, Sun, Moon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { useGeolocation } from "@/hooks/useGeolocation";
+import { useWeatherData } from "@/hooks/useWeatherData";
 
 // Mock weather data - in production, this would come from OpenWeather API
 const mockWeatherData = {
@@ -63,10 +68,17 @@ const mockWeatherData = {
 };
 
 const Index = () => {
-  const [weatherData, setWeatherData] = useState(mockWeatherData);
-  const [isLoading, setIsLoading] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [userLocationData, setUserLocationData] = useState<{ latitude: number; longitude: number; city: string; country: string } | null>(null);
+  const [showLocationPermission, setShowLocationPermission] = useState(true);
+  
   const { toast } = useToast();
+  const { user, userLocation, saveUserLocation, isAuthenticated } = useAuth();
+  const { hasLocation } = useGeolocation();
+  
+  // Use user's saved location or current location data
+  const locationToUse = userLocation || userLocationData;
+  const { weatherData, mlForecast, loading: weatherLoading, error, refetch } = useWeatherData(locationToUse);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -76,37 +88,41 @@ const Index = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const handleLocationChange = async (location: string) => {
-    setIsLoading(true);
+  // Hide location permission if user already has location
+  useEffect(() => {
+    if (userLocation || userLocationData) {
+      setShowLocationPermission(false);
+    }
+  }, [userLocation, userLocationData]);
+
+  const handleLocationGranted = async (location: { latitude: number; longitude: number; city: string; country: string }) => {
+    setUserLocationData(location);
+    setShowLocationPermission(false);
     
-    // Simulate API call
-    setTimeout(() => {
-      setWeatherData(prev => ({
-        ...prev,
-        current: {
-          ...prev.current,
-          location: location
-        }
-      }));
-      setIsLoading(false);
-      toast({
-        title: "Location Updated",
-        description: `Weather data updated for ${location}`,
-      });
-    }, 1500);
+    // Save to user account if authenticated
+    if (isAuthenticated) {
+      await saveUserLocation(location);
+    }
+  };
+
+  const handleLocationChange = async (location: string) => {
+    // In a real app, you would geocode the location string to lat/lng
+    // For now, we'll just update the location name
+    if (locationToUse) {
+      const newLocationData = {
+        ...locationToUse,
+        city: location
+      };
+      setUserLocationData(newLocationData);
+      
+      if (isAuthenticated) {
+        await saveUserLocation(newLocationData);
+      }
+    }
   };
 
   const handleRefresh = async () => {
-    setIsLoading(true);
-    
-    // Simulate data refresh
-    setTimeout(() => {
-      setIsLoading(false);
-      toast({
-        title: "Data Refreshed",
-        description: "Weather data has been updated",
-      });
-    }, 1000);
+    await refetch();
   };
 
   const airQualityStats = [
@@ -155,6 +171,40 @@ const Index = () => {
     }
   ];
 
+  // Show loading or location permission
+  if (showLocationPermission && !locationToUse) {
+    return <LocationPermission onLocationGranted={handleLocationGranted} />;
+  }
+
+  // Show loading state
+  if (weatherLoading && !weatherData) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="text-muted-foreground">Loading weather data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error && !weatherData) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <div className="text-center space-y-4 max-w-md">
+          <p className="text-destructive">Failed to load weather data: {error}</p>
+          <button onClick={handleRefresh} className="text-primary hover:underline">
+            Try again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Use mock data if no real data available
+  const displayData = weatherData || mockWeatherData;
+
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto">
@@ -162,7 +212,7 @@ const Index = () => {
         <Header 
           onLocationChange={handleLocationChange}
           onRefresh={handleRefresh}
-          isLoading={isLoading}
+          isLoading={weatherLoading}
         />
 
         {/* Current Time Display */}
@@ -188,18 +238,25 @@ const Index = () => {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
           {/* Main Weather Card */}
           <WeatherCard 
-            {...weatherData.current}
+            {...displayData.current}
             isMain={true}
           />
 
           {/* Nearby Locations */}
-          {weatherData.nearby.map((location, index) => (
+          {displayData.nearby.map((location, index) => (
             <WeatherCard 
               key={location.location}
               {...location}
             />
           ))}
         </div>
+
+        {/* ML Insights */}
+        {mlForecast && (
+          <div className="mb-8">
+            <MLInsights forecast={mlForecast} />
+          </div>
+        )}
 
         {/* Secondary Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
@@ -215,12 +272,12 @@ const Index = () => {
           />
 
           {/* Weather Map */}
-          <WeatherMap location={weatherData.current.location} />
+          <WeatherMap location={displayData.current.location} />
         </div>
 
         {/* Forecast */}
         <div className="grid grid-cols-1 gap-6">
-          <ForecastCard forecasts={weatherData.forecast} />
+          <ForecastCard forecasts={displayData.forecast} />
         </div>
       </div>
     </div>
