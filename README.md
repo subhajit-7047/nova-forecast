@@ -4,7 +4,7 @@
 
 **URL**: https://lovable.dev/projects/37dc8ad0-c0e3-417d-b59c-fb2bdd34159e
 
-<img width="1919" height="910" alt="Dashboard-image" src="[https://github.com/user-attachments/assets/ab3500c1-832e-4844-a88b-a7bcb5a7c0e3](https://github.com/subhajit-7047/nova-forecast/blob/main/Screenshot%202025-08-17%20222012.png)" />
+<img width="1919" height="910" alt="Dashboard-image" src="" />
 <img width="1919" height="910" alt="Dashboard-image" src="[https://github.com/user-attachments/assets/ab3500c1-832e-4844-a88b-a7bcb5a7c0e3](https://github.com/subhajit-7047/nova-forecast/blob/main/Screenshot%202025-08-17%20222031.png)" />
 
 
